@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Resume Analyzer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0F1117;
+    --surface: #1A1D27;
+    --surface2: #22263A;
+    --border: #2E3250;
+    --accent: #6C63FF;
+    --accent2: #00D4AA;
+    --accent3: #FF6B6B;
+    --text: #E8EAF6;
+    --muted: #7B82A8;
+    --gold: #FFD166;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 1.2rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+  }
+
+  .logo {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: white;
+  }
+
+  header h1 { font-size: 18px; font-weight: 600; }
+  header span { font-size: 12px; color: var(--muted); margin-left: 4px; }
+
+  .badge-ai {
+    margin-left: auto;
+    background: linear-gradient(135deg, #6C63FF22, #00D4AA22);
+    border: 1px solid var(--accent);
+    color: var(--accent2);
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  main {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+
+  .hero {
+    text-align: center;
+    padding: 2.5rem 0 2rem;
+  }
+
+  .hero h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero p { color: var(--muted); font-size: 15px; }
+
+  .input-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .input-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  @media (max-width: 600px) { .input-grid { grid-template-columns: 1fr; } }
+
+  label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+  }
+
+  textarea, input, select {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 12px 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: vertical;
+  }
+
+  textarea:focus, input:focus, select:focus {
+    border-color: var(--accent);
+  }
+
+  textarea { min-height: 180px; }
+
+  select option { background: var(--surface2); }
+
+  .btn-analyze {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #8B5CF6);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-analyze:hover { opacity: 0.9; }
+  .btn-analyze:active { transform: scale(0.99); }
+  .btn-analyze:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .results { display: none; }
+  .results.show { display: block; }
+
+  .score-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 600px) { .score-row { grid-template-columns: 1fr; } }
+
+  .score-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.2rem;
+    text-align: center;
+  }
+
+  .score-card .num {
+    font-size: 2.2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .score-card .lbl {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .score-bar {
+    height: 6px;
+    background: var(--surface2);
+    border-radius: 3px;
+    margin: 10px 0 4px;
+    overflow: hidden;
+  }
+
+  .score-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+
+  .result-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.4rem;
+    margin-bottom: 1rem;
+  }
+
+  .result-block h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .result-block h3 .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .result-content {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text);
+    white-space: pre-wrap;
+  }
+
+  .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+
+  .tag {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+
+  .tag-green { background: #00D4AA22; color: var(--accent2); border: 1px solid #00D4AA44; }
+  .tag-red { background: #FF6B6B22; color: var(--accent3); border: 1px solid #FF6B6B44; }
+  .tag-yellow { background: #FFD16622; color: var(--gold); border: 1px solid #FFD16644; }
+  .tag-purple { background: #6C63FF22; color: var(--accent); border: 1px solid #6C63FF44; }
+
+  .loading {
+    text-align: center;
+    padding: 3rem;
+    display: none;
+  }
+
+  .loading.show { display: block; }
+
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading p { color: var(--muted); font-size: 14px; }
+  .loading .sub { font-size: 12px; margin-top: 4px; color: var(--border); }
+
+  .error-box {
+    background: #FF6B6B11;
+    border: 1px solid #FF6B6B44;
+    border-radius: 12px;
+    padding: 1rem 1.2rem;
+    color: var(--accent3);
+    font-size: 14px;
+    margin-bottom: 1rem;
+    display: none;
+  }
+
+  .error-box.show { display: block; }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  @media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">AI</div>
+  <h1>Resume Analyzer <span>by Vishnu</span></h1>
+  <div class="badge-ai">⚡ Powered by Claude AI</div>
+</header>
+
+<main>
+  <div class="hero">
+    <h2>Analyze Your Resume with AI</h2>
+    <p>Get a score, suggestions, and job match — instantly</p>
+  </div>
+
+  <div class="input-area">
+    <div class="input-grid">
+      <div>
+        <label>Your Resume Text</label>
+        <textarea id="resumeText" placeholder="Paste your resume content here...
+
+Example:
+John Doe
+Software Developer
+Skills: Python, Node.js, React, CSS
+Experience: 2 years at XYZ company
+Built full-stack web apps..."></textarea>
+      </div>
+      <div>
+        <label>Job Description (optional)</label>
+        <textarea id="jobDesc" placeholder="Paste the job description you're applying for...
+
+This helps get a more accurate job match score and specific suggestions tailored to the role."></textarea>
+      </div>
+    </div>
+
+    <div style="margin-bottom: 1rem;">
+      <label>Target Role</label>
+      <select id="targetRole">
+        <option value="Full-Stack Developer">Full-Stack Developer</option>
+        <option value="Frontend Developer">Frontend Developer</option>
+        <option value="Backend Developer">Backend Developer</option>
+        <option value="Python Developer">Python Developer</option>
+        <option value="Software Engineer">Software Engineer</option>
+        <option value="Cybersecurity Analyst">Cybersecurity Analyst</option>
+        <option value="Data Analyst">Data Analyst</option>
+        <option value="DevOps Engineer">DevOps Engineer</option>
+      </select>
+    </div>
+
+    <button class="btn-analyze" id="analyzeBtn" onclick="analyzeResume()">
+      🔍 Analyze My Resume
+    </button>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>AI is analyzing your resume...</p>
+    <div class="sub">Checking ATS score, skills, job match & more</div>
+  </div>
+
+  <div class="results" id="results">
+
+    <div class="score-row" id="scoreRow"></div>
+
+    <div class="two-col">
+      <div class="result-block" id="strengthsBlock">
+        <h3><span class="dot" style="background:var(--accent2)"></span>Strengths</h3>
+        <div class="result-content" id="strengthsContent"></div>
+      </div>
+      <div class="result-block" id="weaknessesBlock">
+        <h3><span class="dot" style="background:var(--accent3)"></span>Weaknesses</h3>
+        <div class="result-content" id="weaknessesContent"></div>
+      </div>
+    </div>
+
+    <div class="result-block">
+      <h3><span class="dot" style="background:var(--gold)"></span>Missing Keywords</h3>
+      <div id="keywordsContent"></div>
+    </div>
+
+    <div class="result-block">
+      <h3><span class="dot" style="background:var(--accent)"></span>Top Suggestions</h3>
+      <div class="result-content" id="suggestionsContent"></div>
+    </div>
+
+    <div class="result-block">
+      <h3><span class="dot" style="background:#FF9F43"></span>Job Match Analysis</h3>
+      <div class="result-content" id="jobMatchContent"></div>
+    </div>
+
+    <div class="result-block">
+      <h3><span class="dot" style="background:var(--accent2)"></span>Recommended Skills to Add</h3>
+      <div id="skillsContent"></div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+async function analyzeResume() {
+  const resume = document.getElementById('resumeText').value.trim();
+  const jobDesc = document.getElementById('jobDesc').value.trim();
+  const role = document.getElementById('targetRole').value;
+  const btn = document.getElementById('analyzeBtn');
+  const errorBox = document.getElementById('errorBox');
+
+  errorBox.className = 'error-box';
+
+  if (!resume) {
+    errorBox.textContent = '⚠️ Please paste your resume text before analyzing.';
+    errorBox.className = 'error-box show';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Analyzing...';
+  document.getElementById('loading').className = 'loading show';
+  document.getElementById('results').className = 'results';
+
+  const prompt = `You are an expert resume analyzer and career coach. Analyze the resume below for a "${role}" position.
+
+RESUME:
+${resume}
+
+${jobDesc ? `JOB DESCRIPTION:\n${jobDesc}` : ''}
+
+Return ONLY a valid JSON object with this exact structure (no extra text, no markdown):
+{
+  "ats_score": <number 0-100>,
+  "overall_score": <number 0-100>,
+  "job_match_score": <number 0-100>,
+  "strengths": "<3-4 specific strengths as bullet points using • symbol>",
+  "weaknesses": "<3-4 specific weaknesses as bullet points using • symbol>",
+  "missing_keywords": ["keyword1", "keyword2", "keyword3", "keyword4", "keyword5"],
+  "suggestions": "<5 specific actionable suggestions numbered 1-5>",
+  "job_match_analysis": "<2-3 sentences on how well this resume matches the target role and what to improve>",
+  "skills_to_add": ["skill1", "skill2", "skill3", "skill4", "skill5"]
+}`;
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1000,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    const data = await response.json();
+    const text = data.content.map(i => i.text || '').join('');
+    const clean = text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    renderResults(parsed, role);
+  } catch (err) {
+    errorBox.textContent = '❌ Something went wrong. Please try again.';
+    errorBox.className = 'error-box show';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔍 Analyze My Resume';
+    document.getElementById('loading').className = 'loading';
+  }
+}
+
+function getColor(score) {
+  if (score >= 75) return 'var(--accent2)';
+  if (score >= 50) return 'var(--gold)';
+  return 'var(--accent3)';
+}
+
+function renderResults(data, role) {
+  const scoreRow = document.getElementById('scoreRow');
+  const scores = [
+    { label: 'ATS Score', value: data.ats_score, desc: 'Applicant Tracking' },
+    { label: 'Overall Score', value: data.overall_score, desc: 'Resume Quality' },
+    { label: 'Job Match', value: data.job_match_score, desc: role }
+  ];
+
+  scoreRow.innerHTML = scores.map(s => `
+    <div class="score-card">
+      <div class="num" style="color:${getColor(s.value)}">${s.value}<span style="font-size:1rem">%</span></div>
+      <div class="lbl">${s.label}</div>
+      <div class="score-bar">
+        <div class="score-bar-fill" style="width:${s.value}%;background:${getColor(s.value)}"></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted)">${s.desc}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('strengthsContent').textContent = data.strengths;
+  document.getElementById('weaknessesContent').textContent = data.weaknesses;
+  document.getElementById('suggestionsContent').textContent = data.suggestions;
+  document.getElementById('jobMatchContent').textContent = data.job_match_analysis;
+
+  document.getElementById('keywordsContent').innerHTML = `
+    <div class="tag-row">
+      ${(data.missing_keywords || []).map(k => `<span class="tag tag-red">+ ${k}</span>`).join('')}
+    </div>`;
+
+  document.getElementById('skillsContent').innerHTML = `
+    <div class="tag-row">
+      ${(data.skills_to_add || []).map(s => `<span class="tag tag-purple">✦ ${s}</span>`).join('')}
+    </div>`;
+
+  document.getElementById('results').className = 'results show';
+  document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+}
+</script>
+</body>
+</html>

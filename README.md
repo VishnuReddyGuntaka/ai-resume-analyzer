@@ -8,7 +8,7 @@ Paste your resume → get an instant ATS score, job match %, suggestions, and mi
 
 ## 🚀 Live Demo
 
-🔗 [Click here to try it](https://YOUR-USERNAME.github.io/ai-resume-analyzer)
+🔗 [Click here to try it](https://vishnureddyguntaka.github.io/ai-resume-analyzer)
 
 ---
 
